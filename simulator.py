@@ -2,63 +2,162 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+import numpy as np
 
-data_species = pd.read_csv('especies.csv')
-data_interactions = pd.read_csv('predacion.csv')
+def load_data(species_file, interactions_file):
+    data_species = pd.read_csv(species_file)
+    data_interactions = pd.read_csv(interactions_file)
+    return data_species, data_interactions
 
-G = nx.DiGraph()
-for _, row in data_species.iterrows():
-    G.add_node(row['Nombre_Común'], 
-               Cantidad=row['Cantidad_Inicial'],
-               humedad=row['Humedad_Óptima (%)'], 
-               temperatura=row['Temperatura_Óptima (°C)'])
+def create_interaction_graph(data_species, data_interactions):
+    G = nx.DiGraph()
+    
+    for _, row in data_species.iterrows():
+        G.add_node(row['Nombre_Común'], 
+                   Cantidad=row['Cantidad_Inicial'],
+                   Tasa_Natalidad=row['Tasa_Natalidad'],
+                   Tasa_Mortalidad=row['Tasa_Mortalidad'])
+    
+    for _, row in data_interactions.iterrows():
+        depredador = row['Depredador']
+        presas = row['Presas'].split(',')
+        for presa in presas:
+            G.add_edge(depredador.strip(), presa.strip(), tasa=row['Tasa de predación'])
+    
+    return G
 
-for _, row in data_interactions.iterrows():
-    depredador = row['Depredador']
-    presas = row['Presas'].split(',')
-    for presa in presas:
-        G.add_edge(depredador.strip(), presa.strip())
+def plot_graph(G):
+    pos = nx.spring_layout(G)
+    plt.figure(figsize=(12, 8))
+    nx.draw_networkx_edges(G, pos, arrowstyle='-|>', arrowsize=10, width=0.5, alpha=0.5)
+    nx.draw_networkx_nodes(G, pos, node_size=700, node_color='lightblue', edgecolors='darkgrey')
 
-pos = nx.spring_layout(G)
-plt.figure(figsize=(12, 8))
-nx.draw_networkx_edges(G, pos, arrowstyle='-|>', arrowsize=10, width=0.5, alpha=0.5)
-nx.draw_networkx_nodes(G, pos, node_size=700, node_color='lightblue', edgecolors='darkgrey')
+    labels = {node: f"{node}\nCantidad: {G.nodes[node]['Cantidad']}\nTasa Natalidad: {G.nodes[node]['Tasa_Natalidad']}\nTasa Mortalidad: {G.nodes[node]['Tasa_Mortalidad']}" for node in G.nodes()}
+    nx.draw_networkx_labels(G, pos, labels, font_size=8, font_family='sans-serif')
+    plt.title('Grafo de Interacciones en un Ecosistema', fontsize=15)
+    plt.axis('off')
+    st.pyplot(plt)
 
-labels = {node: f"{node}\nCantidad: {G.nodes[node]['Cantidad']}\nHumedad: {G.nodes[node]['humedad']}%\nTemp. Óptima: {G.nodes[node]['temperatura']}°C" for node in G.nodes()}
-nx.draw_networkx_labels(G, pos, labels, font_size=8, font_family='sans-serif')
-plt.title('Grafo de Interacciones en un Ecosistema', fontsize=15)
-plt.axis('off')
+def calculate_degrees(G):
+    in_degrees = G.in_degree()
+    out_degrees = G.out_degree()
+    
+    in_degree_df = pd.DataFrame(in_degrees, columns=['Nodo', 'Grado de Entrada'])
+    out_degree_df = pd.DataFrame(out_degrees, columns=['Nodo', 'Grado de Salida'])
+    
+    degree = pd.concat([in_degree_df, out_degree_df.drop('Nodo', axis=1)], axis=1)
+    degree["Degree"] = degree["Grado de Entrada"] + degree["Grado de Salida"]
+    
+    return degree
 
-st.write("""
-# Grafo de Interacciones en un Ecosistema
-""")
-st.pyplot(plt)
+def calculate_centrality(G):
+    return nx.degree_centrality(G)
 
-#Determinar el grado de los nodos, que como es el caso de un grafo dirigido, tiene in degree y out degree, lo que nos ayuda a determinar las especies con mas interaccoiones
-#en la red, quienes son los mayores depredadores que serian las de mayor out-degree y las especies más vulnerables que serian las de mayor in-degree
-in_degrees = G.in_degree()
-out_degrees = G.out_degree()
-in_degree_df = pd.DataFrame(in_degrees, columns=['Nodo', 'Grado de Entrada'])
-out_degree_df = pd.DataFrame(out_degrees, columns=['Nodo', 'Grado de Salida'])
-out_degree_df = out_degree_df.drop('Nodo', axis=1)
+def model(populations, t, growth_rates, predation_rates, predator_mortalities):
+    prey_population = populations[0]
+    predator_populations = np.array(populations[1:])
+    predation_rates= np.array(predation_rates)
+    
+    # Ecuación para el cambio en la población de presas
+    d_prey_dt = growth_rates[0] * prey_population - np.sum(predation_rates * prey_population * predator_populations)
+    
+    # Ecuación para la evolución de las poblaciones de los depredadores
+    d_predators_dt = predator_populations * (predation_rates * prey_population) - predator_mortalities * predator_populations
 
-degree = pd.concat([in_degree_df, out_degree_df], axis=1)
-degree["Degree"]=degree["Grado de Entrada"]+degree["Grado de Salida"]
-st.write("""## Grado de los nodos""")
-st.dataframe(degree)
+    return [d_prey_dt] + d_predators_dt.tolist()
 
-#Centralidad del grafo teniendo en cuenta el grado
-degree_centrality = nx.degree_centrality(G)
-fig, ax = plt.subplots(figsize=(8, 6))
-pos = nx.spring_layout(G)
-nx.draw(G, pos, with_labels=False, node_color='red', node_size=2000, font_size=12, ax=ax)
-labels = {node: f"{node}\n{centrality:.2f}" for node, centrality in degree_centrality.items()}
-nx.draw_networkx_labels(G, pos, labels=labels, ax=ax)
+def calculate_parameters(data_species, data_interactions):
+    interaction_data = {}
+    
+    for _, row in data_species.iterrows():
+        species = row['Nombre_Común']
+        growth_rate = row['Tasa_Natalidad']
+        initial_population = row['Cantidad_Inicial']
+        interaction_data[species] = {
+            'growth_rate': growth_rate,
+            'initial_population': initial_population,
+            'predators': [],
+            'is_prey': False,
+            'is_predator': False
+        }
+    
+    for _, row in data_interactions.iterrows():
+        predator = row['Depredador']
+        prey = row['Presas']
+        interaction_data[prey]['predators'].append(predator)
+        interaction_data[prey]['is_prey'] = True
+        interaction_data[predator]['is_predator'] = True
 
-st.pyplot(fig) 
+    return interaction_data
 
-st.write("Centralidad de grado:")
-st.write(degree_centrality)
+def run_simulation(data_species, data_interactions):
+    interaction_data = calculate_parameters(data_species, data_interactions)
+    
+    time_steps = np.linspace(0, 100, 1000)  # Simulación de 100 unidades de tiempo
 
+    # Almacenar la evolución de las poblaciones
+    populations_over_time = {species: [] for species in interaction_data.keys()}
 
+    for t in time_steps:
+        current_populations = []
+        for species, params in interaction_data.items():
+            current_populations.append(params['initial_population'])
 
+        population_solution = odeint(
+            model,
+            current_populations,
+            [0, t],
+            args=(
+                [params['growth_rate'] for params in interaction_data.values()],
+                [0.01] * len(current_populations),
+                [0.1] * len(current_populations)  
+            )
+        )[1]  
+
+        # Actualizar la población inicial
+        for i, species in enumerate(interaction_data):
+            interaction_data[species]['initial_population'] = population_solution[i]
+            populations_over_time[species].append(population_solution[i])
+
+        # Imprimir resultados cada instante
+        print(f"Tiempo: {t:.2f} - Poblaciones: {', '.join(f'{species}: {p:.2f}' for species, p in zip(interaction_data.keys(), population_solution))}")
+
+    # Gráfica de resultados
+    plt.figure(figsize=(10, 5))
+    for species, populations in populations_over_time.items():
+        plt.plot(time_steps, populations, label=species)
+    plt.xlabel('Tiempo')
+    plt.ylabel('Población')
+    plt.title('Dinámica de poblaciones de presa y depredador')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+def main():
+    st.title("Modelo de Dinámica de Poblaciones en un Ecosistema")
+
+    
+    data_species, data_interactions = load_data('especies.csv', 'predacion.csv')
+    G = create_interaction_graph(data_species, data_interactions)
+    plot_graph(G)
+    # Calcular y mostrar grados de los nodos
+    degree = calculate_degrees(G)
+    st.write("## Grado de los nodos")
+    st.dataframe(degree)
+    
+    degree_centrality = calculate_centrality(G)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos, with_labels=False, node_color='red', node_size=2000, font_size=12, ax=ax)
+    labels = {node: f"{node}\n{centrality:.2f}" for node, centrality in degree_centrality.items()}
+    nx.draw_networkx_labels(G, pos, labels=labels, ax=ax)
+    st.pyplot(fig) 
+    st.write("Centralidad de grado:")
+    st.write(degree_centrality)
+
+    # Ejecutar simulación de dinámica de poblaciones
+    run_simulation(data_species, data_interactions)
+
+if __name__ == "__main__":
+    main()
