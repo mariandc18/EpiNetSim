@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib      
+matplotlib.use("TKAGG")
 from scipy.integrate import odeint
 import numpy as np
 
@@ -54,18 +56,23 @@ def calculate_degrees(G):
 def calculate_centrality(G):
     return nx.degree_centrality(G)
 
-def model(populations, t, growth_rates, predation_rates, predator_mortalities):
+def model(populations, t, growth_rates, predation_rates_dict, predator_mortalities):
     prey_population = populations[0]
     predator_populations = np.array(populations[1:])
-    predation_rates= np.array(predation_rates)
     
-    # Ecuación para el cambio en la población de presas
-    d_prey_dt = growth_rates[0] * prey_population - np.sum(predation_rates * prey_population * predator_populations)
+    d_prey_dt = growth_rates[0] * prey_population
+    for predator, prey in predation_rates_dict.items():
+        for p, rate in prey.items():
+            d_prey_dt -= rate * prey_population * predator_populations[list(predation_rates_dict.keys()).index(predator)]
     
-    # Ecuación para la evolución de las poblaciones de los depredadores
-    d_predators_dt = predator_populations * (predation_rates * prey_population) - predator_mortalities * predator_populations
-
-    return [d_prey_dt] + d_predators_dt.tolist()
+    d_predators_dt = []
+    for i, predator in enumerate(predation_rates_dict.keys()):
+        d_predator_dt = predator_mortalities[i] * predator_populations[i]
+        for p, rate in predation_rates_dict[predator].items():
+            d_predator_dt += rate * prey_population * predator_populations[i]
+        d_predators_dt.append(d_predator_dt)
+    
+    return [d_prey_dt] + d_predators_dt + [0]*(10-len(d_predators_dt)-1)  # Add zeros to match the length of y0
 
 def calculate_parameters(data_species, data_interactions):
     interaction_data = {}
@@ -88,30 +95,42 @@ def calculate_parameters(data_species, data_interactions):
         interaction_data[prey]['predators'].append(predator)
         interaction_data[prey]['is_prey'] = True
         interaction_data[predator]['is_predator'] = True
-
-    return interaction_data
+    
+    # Create a dictionary to store predation rates
+    predation_rates_dict = {}
+    for _, row in data_interactions.iterrows():
+        predator = row['Depredador']
+        prey = row['Presas']
+        predation_rate = row['Tasa de predación']
+        if predator not in predation_rates_dict:
+            predation_rates_dict[predator] = {}
+        predation_rates_dict[predator][prey] = predation_rate
+    
+    return interaction_data, predation_rates_dict
 
 def run_simulation(data_species, data_interactions):
-    interaction_data = calculate_parameters(data_species, data_interactions)
+    interaction_data, predation_rates_dict = calculate_parameters(data_species, data_interactions)
     
     time_steps = np.linspace(0, 100, 1000)  # Simulación de 100 unidades de tiempo
 
     # Almacenar la evolución de las poblaciones
     populations_over_time = {species: [] for species in interaction_data.keys()}
 
-    for t in time_steps:
-        current_populations = []
-        for species, params in interaction_data.items():
-            current_populations.append(params['initial_population'])
+    # Inicializar poblaciones
+    current_populations = []
+    for species, params in interaction_data.items():
+        current_populations.append(params['initial_population'])
 
+    # Simulación
+    for t in time_steps:
         population_solution = odeint(
             model,
             current_populations,
             [0, t],
             args=(
                 [params['growth_rate'] for params in interaction_data.values()],
-                [0.01] * len(current_populations),
-                [0.1] * len(current_populations)  
+                predation_rates_dict,
+                [0.1] * len(current_populations)  # Mortalidad de depredadores
             )
         )[1]  
 
@@ -122,6 +141,7 @@ def run_simulation(data_species, data_interactions):
 
         # Imprimir resultados cada instante
         print(f"Tiempo: {t:.2f} - Poblaciones: {', '.join(f'{species}: {p:.2f}' for species, p in zip(interaction_data.keys(), population_solution))}")
+        
 
     # Gráfica de resultados
     plt.figure(figsize=(10, 5))
