@@ -1,0 +1,11 @@
+Nombre_Común,Nombre_Científico,Cantidad_Inicial,Temperatura_Óptima (°C),Humedad_Óptima (%),Temperatura_Mínima (°C),Temperatura_Máxima (°C),Tasa_Natalidad,Tasa_Mortalidad
+Águila,Accipiter gentilis,200,15-25,60-70,-10,35,5.4,0.3
+Ratón,Mus musculus,200,20-25,40-60,15,30,2.0,1.5
+Conejo,Oryctolagus cuniculus,100,15-20,50-60,5,30,1.2,1.0
+Serpiente,Natrix natrix,70,20-30,60-80,10,35,0.8,0.6
+Zorro,Vulpes vulpes,30,10-20,40-60,-20,30,0.7,0.5
+Sapo,Bufo bufo,150,10-20,70-80,0,25,1.5,1.2
+Pájaro,Passer domesticus,300,15-25,50-60,-10,35,2.5,1.8
+Lombriz,Eisenia fetida,200,10-20,80-90,5,25,3.0,1.5
+Mariposa,Vanessa cardui,150,20-30,40-60,15,35,1.8,0.8
+Escorpión,Scorpio maurus,40,25-35,30-50,20,40,0.9,0.2
