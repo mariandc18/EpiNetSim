@@ -4,3 +4,4 @@ from dash.dependencies import Input, Output, State
 import time
 import plotly.graph_objects as go
 
+app=dash.Dash(__name__)
