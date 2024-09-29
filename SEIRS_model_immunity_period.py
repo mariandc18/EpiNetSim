@@ -9,7 +9,6 @@ SPREADING_EXPOSED = 'E'
 SPREADING_INFECTED = 'I'
 SPREADING_RECOVERED = 'R'
 
-# Inicializar los nodos del grafo como susceptibles
 def spreading_init(g):  
     for i in g.nodes():  
         g.nodes[i]['state'] = SPREADING_SUSCEPTIBLE  

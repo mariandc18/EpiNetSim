@@ -39,10 +39,8 @@ def spreading_run(g, model, iterations):
 
 n = 300
 er = nx.erdos_renyi_graph(n, 0.01)
-# Initialize and seed the graph
 spreading_init(er)
 spreading_seed(er, 0.05)
-# Create and run the SIR model
 model = spreading_make_sir_model(0.3, 0.05)
 
 iterations = 200
@@ -55,7 +53,6 @@ color_map = {
 for step in range(0, iterations, 20):  
     spreading_run(er, model, 10)
     
-    # Contar nodos en cada estado
     count_s = sum(1 for i in er.nodes() if er.nodes[i]['state'] == SPREADING_SUSCEPTIBLE)
     count_i = sum(1 for i in er.nodes() if er.nodes[i]['state'] == SPREADING_INFECTED)
     count_r = sum(1 for i in er.nodes() if er.nodes[i]['state'] == SPREADING_RECOVERED)
