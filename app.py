@@ -5,7 +5,7 @@ import networkx as nx
 import plotly.graph_objects as go
 from models.SIR_model import spreading_init, spreading_seed, spreading_make_sir_model, spreading_step
 from models.SIS_model import spreading_make_sis_model
-# Aquí importas los otros modelos necesarios
+
 
 # Constants for SIR model states
 SPREADING_SUSCEPTIBLE = 'S'
@@ -21,7 +21,7 @@ color_map = {
 # Crear la aplicación Dash
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
-# Crear el layout de la aplicación
+
 app.layout = html.Div([
     html.H1("Simulador de Propagación de Epidemias"),
 
@@ -37,24 +37,20 @@ app.layout = html.Div([
 
     html.Div(id='model-parameters'),
 
-    # Botones de control de la simulación
     html.Button('Iniciar', id='start-button', n_clicks=0),
     html.Button('Pausar', id='pause-button', n_clicks=0),
     html.Button('Continuar', id='continue-button', n_clicks=0),
     html.Button('Reset', id='reset-button', n_clicks=0),
 
-    # Intervalo para la iteración automática
-    dcc.Interval(id='interval', interval=1000, n_intervals=0),  # Intervalo de 1 segundo
+  
+    dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True), 
 
-    # Gráfico de la simulación
     dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
 
-    # Almacenar el estado del grafo y la simulación
     dcc.Store(id='graph-data', data={'graph': None, 'step': 0}),
-    dcc.Store(id='simulation-running', data=False),  # Estado de la simulación (corriendo o no)
+    dcc.Store(id='simulation-running', data=False), 
 ])
 
-# Callback para mostrar los parámetros según el modelo seleccionado
 @app.callback(
     Output('model-parameters', 'children'),
     Input('model-dropdown', 'value')
@@ -79,15 +75,15 @@ def display_model_parameters(selected_model):
             html.Label("Probabilidad de Infección (pInfect):"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
 
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Ser Nuevamente Susceptible (pRecover):"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
         ])
 
-# Callback para controlar la simulación y actualizar el gráfico
 @app.callback(
     Output('graph', 'figure'),
     Output('graph-data', 'data'),
     Output('simulation-running', 'data'),
+    Output('interval', 'disabled'),  
     Input('interval', 'n_intervals'),
     Input('start-button', 'n_clicks'),
     Input('pause-button', 'n_clicks'),
@@ -101,41 +97,43 @@ def display_model_parameters(selected_model):
     State('simulation-running', 'data')
 )
 def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset_clicks, selected_model, num_nodes, p_infect, p_recover, graph_data, simulation_running):
-    # Resetear la simulación
-    if reset_clicks > 0:
-        return go.Figure(), {'graph': None, 'step': 0}, False
+    ctx = dash.callback_context
 
-    # Iniciar la simulación si el botón de iniciar fue presionado
-    if start_clicks > 0 and graph_data['graph'] is None:
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if triggered_id == 'reset-button':
+        return go.Figure(), {'graph': None, 'step': 0}, False, True
+
+    if triggered_id == 'start-button' and graph_data['graph'] is None:
         g = nx.erdos_renyi_graph(num_nodes, 0.01)
         spreading_init(g)
         spreading_seed(g, 0.05)
         graph_data['graph'] = nx.node_link_data(g)
         graph_data['step'] = 1
         simulation_running = True
-    elif graph_data['graph'] is not None:
+        return dash.no_update, graph_data, True, False  
+
+    if graph_data['graph'] is not None:
         g = nx.node_link_graph(graph_data['graph'])
-    else:
-        return dash.no_update, graph_data, simulation_running
 
-    # Pausar la simulación
-    if pause_clicks > 0:
+    if triggered_id == 'pause-button':
         simulation_running = False
+        return dash.no_update, graph_data, simulation_running, True 
 
-    # Continuar la simulación si se presionó el botón continuar o la simulación está corriendo
-    if (continue_clicks > 0 or simulation_running) and graph_data['graph'] is not None:
+    if triggered_id == 'continue-button':
+        simulation_running = True
+        return dash.no_update, graph_data, simulation_running, False 
+
+    if simulation_running:
         if selected_model == 'SIR':
             model = spreading_make_sir_model(p_infect, p_recover)
         elif selected_model == 'SIS':
             model = spreading_make_sis_model(p_infect, p_recover)
-        
-        # Avanzar un paso en la simulación
+
         spreading_step(g, model)
         graph_data['graph'] = nx.node_link_data(g)
         graph_data['step'] += 1
-        simulation_running = True
 
-    # Crear la visualización del grafo utilizando Plotly
     pos = nx.spring_layout(g)
     node_trace = go.Scatter(
         x=[pos[i][0] for i in g.nodes],
@@ -170,8 +168,7 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
         yaxis=dict(showgrid=False, zeroline=False)
     )
 
-    return fig, graph_data, simulation_running
+    return fig, graph_data, simulation_running, False  
 
-# Ejecutar la aplicación Dash
 if __name__ == '__main__':
     app.run_server(debug=True)
