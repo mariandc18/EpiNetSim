@@ -136,7 +136,7 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
         graph_data['graph'] = nx.node_link_data(g)
         graph_data['step'] += 1
 
-    pos = nx.spring_layout(g)
+    pos = nx.spring_layout(g, k=0.6)
     node_trace = go.Scatter(
         x=[pos[i][0] for i in g.nodes],
         y=[pos[i][1] for i in g.nodes],
