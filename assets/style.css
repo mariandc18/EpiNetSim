@@ -1,0 +1,56 @@
+/* Estilo para todo el contenedor */
+body {
+    background-color: #f4f4f4;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Encabezado */
+h1 {
+    text-align: center;
+    color: #333;
+    margin-top: 20px;
+    font-size: 2.5em;
+}
+
+/* Contenedores */
+#app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Estilo para los dropdowns y entradas */
+.dash-dropdown,
+.dash-input {
+    margin: 10px;
+    padding: 10px;
+    font-size: 1.1em;
+}
+
+/* Botones */
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Estilo del gráfico */
+#graph {
+    margin-top: 20px;
+}
