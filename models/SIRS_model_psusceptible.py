@@ -10,14 +10,13 @@ SPREADING_RECOVERED = 'R'
 def spreading_init(g):
     for i in g.nodes():
         g.nodes[i]['state'] = SPREADING_SUSCEPTIBLE
-        g.nodes[i]['recovery_time'] = 0  
 
 def spreading_seed(g, pSick):
     for i in g.nodes():
         if rnd.random() <= pSick:
             g.nodes[i]['state'] = SPREADING_INFECTED
 
-def spreading_make_sirs_model(pInfect, pRecover, recovery_duration, pSusceptible):
+def spreading_make_sirs_model(pInfect, pRecover, pSusceptible):
     def model(g, i):
         if g.nodes[i]['state'] == SPREADING_INFECTED:
             for m in g.neighbors(i):
@@ -27,16 +26,14 @@ def spreading_make_sirs_model(pInfect, pRecover, recovery_duration, pSusceptible
             
             if rnd.random() <= pRecover:
                 g.nodes[i]['state'] = SPREADING_RECOVERED
-                g.nodes[i]['recovery_time'] = 0  # Reinicia el tiempo de recuperación al recuperarse
         
         elif g.nodes[i]['state'] == SPREADING_RECOVERED:
-            g.nodes[i]['recovery_time'] += 1  # Aumenta el tiempo desde que se recuperó
-            if g.nodes[i]['recovery_time'] >= recovery_duration:
-                if rnd.random() <= pSusceptible:  # Probabilidad de volver a ser susceptible
-                    g.nodes[i]['state'] = SPREADING_SUSCEPTIBLE
-                    print(f" El nodo {i} se ha vuelto susceptible nuevamente después de {recovery_duration} iteraciones.")
-
+            if rnd.random() <= pSusceptible:
+                g.nodes[i]['state'] = SPREADING_SUSCEPTIBLE
+                print(f" El nodo {i} se ha recuperado y se ha vuelto susceptible nuevamente.")
+                
     return model
+
 
 def spreading_step(g, model):
     for i in list(g.nodes()):
@@ -52,9 +49,8 @@ er = nx.erdos_renyi_graph(n, 0.01)
 spreading_init(er)
 spreading_seed(er, 0.05)
 
-recovery_duration = 5  # Duración mínima antes de evaluar la susceptibilidad
-p_susceptible = 0.5  # Probabilidad de que un nodo recuperado vuelva a ser susceptible
-model = spreading_make_sirs_model(0.3, 0.05, recovery_duration, p_susceptible)  
+model = spreading_make_sirs_model(0.3, 0.05, 0.01)  
+
 iterations = 200
 color_map = {
     SPREADING_SUSCEPTIBLE: 'blue',
