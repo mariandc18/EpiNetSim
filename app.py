@@ -11,11 +11,13 @@ from models.SIS_model import spreading_make_sis_model
 SPREADING_SUSCEPTIBLE = 'S'
 SPREADING_INFECTED = 'I'
 SPREADING_RECOVERED = 'R'
+SPREADING_DEAD = 'D'
 
 color_map = {
     SPREADING_SUSCEPTIBLE: 'blue',
     SPREADING_INFECTED: 'red',
-    SPREADING_RECOVERED: 'green'
+    SPREADING_RECOVERED: 'green',
+    SPREADING_DEAD: 'black'
 }
 
 # Crear la aplicación Dash
