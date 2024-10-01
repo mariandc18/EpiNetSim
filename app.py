@@ -3,26 +3,27 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 import networkx as nx
 import plotly.graph_objects as go
+import random
 from models.SIR_model import spreading_init, spreading_seed, spreading_make_sir_model, spreading_step
 from models.SIS_model import spreading_make_sis_model
-
 
 # Constants for SIR model states
 SPREADING_SUSCEPTIBLE = 'S'
 SPREADING_INFECTED = 'I'
 SPREADING_RECOVERED = 'R'
 SPREADING_DEAD = 'D'
+SPREADING_QUARANTINED = 'Quarantined'
 
 color_map = {
     SPREADING_SUSCEPTIBLE: 'blue',
     SPREADING_INFECTED: 'red',
     SPREADING_RECOVERED: 'green',
-    SPREADING_DEAD: 'black'
+    SPREADING_DEAD: 'black',
+    SPREADING_QUARANTINED: 'orange'
 }
 
 # Crear la aplicación Dash
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
-
 
 app.layout = html.Div([
     html.H1("Simulador de Propagación de Epidemias"),
@@ -43,14 +44,22 @@ app.layout = html.Div([
     html.Button('Pausar', id='pause-button', n_clicks=0),
     html.Button('Continuar', id='continue-button', n_clicks=0),
     html.Button('Reset', id='reset-button', n_clicks=0),
+    html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
+    html.Button('Desconectar Nodos', id='disconnect-button', n_clicks=0),
 
-  
     dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True), 
 
     dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
 
     dcc.Store(id='graph-data', data={'graph': None, 'step': 0}),
     dcc.Store(id='simulation-running', data=False), 
+
+    # Nuevos campos de entrada para el número de nodos a poner en cuarentena y desconectar
+    html.Label('Número de Nodos a Poner en Cuarentena:'),
+    dcc.Input(id='quarantine-input', type='number', value=10, min=0),
+
+    html.Label('Número de Nodos a Desconectar:'),
+    dcc.Input(id='disconnect-input', type='number', value=10, min=0),
 ])
 
 @app.callback(
@@ -81,6 +90,25 @@ def display_model_parameters(selected_model):
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
         ])
 
+def quarantine_simulation(g, num_quarantine):
+    nodes = list(g.nodes)
+    quarantined_nodes = random.sample(nodes, min(num_quarantine, len(nodes)))  # Asegúrate de no exceder los nodos disponibles
+
+    for node in quarantined_nodes:
+        g.nodes[node]['state'] = SPREADING_QUARANTINED
+
+    return g
+
+def disconnect_random_nodes(g, num_disconnect):
+    nodes = list(g.nodes)
+    nodes_to_disconnect = random.sample(nodes, min(num_disconnect, len(nodes)))  # Asegúrate de no exceder los nodos disponibles
+
+    for node in nodes_to_disconnect:
+        edges_to_remove = list(g.edges(node))
+        g.remove_edges_from(edges_to_remove)
+
+    return g
+
 @app.callback(
     Output('graph', 'figure'),
     Output('graph-data', 'data'),
@@ -91,16 +119,28 @@ def display_model_parameters(selected_model):
     Input('pause-button', 'n_clicks'),
     Input('continue-button', 'n_clicks'),
     Input('reset-button', 'n_clicks'),
+    Input('quarantine-button', 'n_clicks'),
+    Input('disconnect-button', 'n_clicks'),
     Input('model-dropdown', 'value'),
+    
     State('num-nodes', 'value'),
     State('pInfect', 'value'),
     State('pRecover', 'value'),
+    
+    State('quarantine-input', 'value'),  
+    State('disconnect-input', 'value'),  
+    
     State('graph-data', 'data'),
     State('simulation-running', 'data')
 )
-def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset_clicks, selected_model, num_nodes, p_infect, p_recover, graph_data, simulation_running):
+def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
+                  reset_clicks, quarantine_clicks,
+                  disconnect_clicks, selected_model,
+                  num_nodes, p_infect, p_recover,
+                  num_quarantine, num_disconnect,
+                  graph_data, simulation_running):
+    
     ctx = dash.callback_context
-
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if triggered_id == 'reset-button':
@@ -126,6 +166,14 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
         simulation_running = True
         return dash.no_update, graph_data, simulation_running, False 
 
+    if triggered_id == 'quarantine-button':
+        g = quarantine_simulation(g, num_quarantine) 
+        graph_data['graph'] = nx.node_link_data(g)
+
+    if triggered_id == 'disconnect-button':
+        g = disconnect_random_nodes(g, num_disconnect)  
+        graph_data['graph'] = nx.node_link_data(g)
+
     if simulation_running:
         if selected_model == 'SIR':
             model = spreading_make_sir_model(p_infect, p_recover)
@@ -137,6 +185,7 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
         graph_data['step'] += 1
 
     pos = nx.spring_layout(g, k=0.6)
+    
     node_trace = go.Scatter(
         x=[pos[i][0] for i in g.nodes],
         y=[pos[i][1] for i in g.nodes],
@@ -147,8 +196,10 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
             line=dict(width=2)
         )
     )
+    
     edge_x = []
     edge_y = []
+    
     for edge in g.edges():
         x0, y0 = pos[edge[0]]
         x1, y1 = pos[edge[1]]
@@ -164,6 +215,7 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
     )
 
     fig = go.Figure(data=[edge_trace, node_trace])
+    
     fig.update_layout(
         showlegend=False,
         xaxis=dict(showgrid=False, zeroline=False),
@@ -173,4 +225,4 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks, reset
     return fig, graph_data, simulation_running, False  
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+   app.run_server(debug=True)
