@@ -29,7 +29,6 @@ def spreading_make_sirs_model(pInfect, pRecover, pSusceptible):
         elif g.nodes[i]['state'] == SPREADING_RECOVERED:
             if rnd.random() <= pSusceptible:
                 g.nodes[i]['state'] = SPREADING_SUSCEPTIBLE
-                print(f" El nodo {i} se ha recuperado y se ha vuelto susceptible nuevamente.")
                 
     return model
 
