@@ -30,7 +30,6 @@ color_map = {
     SPREADING_EXPOSED:'yellow'
 }
 
-# Crear la aplicación Dash
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
 app.layout = html.Div([
@@ -40,14 +39,14 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='model-dropdown',
         options=[
-            {'label': 'SIR', 'value': 'SIR'},
-            {'label':'SIRD', 'value':'SIRD'},
-            {'label': 'SIS', 'value': 'SIS'},
-            {'label': 'SIRS en un periodo de susceptibilidad', 'value':'SIRS_period'},
-            {'label': 'SIRS con una probabilidad de susceptibilidad','value':'SIRS_probability'},
-            {'label':'SEIR', 'value':'SEIR'},
-            {'label':'SEIRS con un periodo de inmunidad', 'value':'SEIRS_inmunity'},
-            {'label':'SEIRS plossimmunity', 'value':'SEIRS_plossimmunity'},
+            {'label': 'Susceptible - Infectado - Recuperado (SIR)', 'value': 'SIR'},
+            {'label':'Susceptible - Infectado - Recuperado - Fallecido (SIRD)', 'value':'SIRD'},
+            {'label': 'Susceptible - Infectado - Susceptible (SIS)', 'value': 'SIS'},
+            {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con tiempo de recuperación fijo]', 'value':'SIRS_period'},
+            {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con probabilidad de susceptibilidad]','value':'SIRS_probability'},
+            {'label':'Susceptible - Expuesto - Infectado - Recuperado (SEIR)', 'value':'SEIR'},
+            {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con tiempo de recuperación fijo]', 'value':'SEIRS_inmunity'},
+            {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con probabilidad de susceptibilidad]', 'value':'SEIRS_plossimmunity'},
         ],
         value='SIR'
     ),
@@ -213,8 +212,6 @@ def display_model_parameters(selected_model):
     else:
         return html.Div() 
 
-
-
 def quarantine_simulation(g, num_quarantine):
     nodes = list(g.nodes)
     quarantined_nodes = random.sample(nodes, min(num_quarantine, len(nodes)))  
@@ -226,7 +223,7 @@ def quarantine_simulation(g, num_quarantine):
 
 def disconnect_random_nodes(g, num_disconnect):
     nodes = list(g.nodes)
-    nodes_to_disconnect = random.sample(nodes, min(num_disconnect, len(nodes)))  # Asegúrate de no exceder los nodos disponibles
+    nodes_to_disconnect = random.sample(nodes, min(num_disconnect, len(nodes)))  
 
     for node in nodes_to_disconnect:
         edges_to_remove = list(g.edges(node))
@@ -235,16 +232,12 @@ def disconnect_random_nodes(g, num_disconnect):
     return g
 
 def vaccinate_nodes(g, num_vaccinate, p_vaccinate):
-    # Filtrar nodos susceptibles e infectados que no han sido vacunados
     eligible_nodes = [node for node in g.nodes if g.nodes[node]['state'] in [SPREADING_SUSCEPTIBLE, SPREADING_INFECTED] and not g.nodes[node].get('vaccinated', False)]
-    
-    # Seleccionar aleatoriamente los nodos a vacunar
     vaccinated_nodes = random.sample(eligible_nodes, min(num_vaccinate, len(eligible_nodes)))  
-
     for node in vaccinated_nodes:
-        g.nodes[node]['state'] = SPREADING_SUSCEPTIBLE  # Cambia el estado a susceptible
-        g.nodes[node]['pInfect'] = p_vaccinate  # Ajusta la probabilidad de infección
-        g.nodes[node]['vaccinated'] = True  # Marca el nodo como vacunado
+        g.nodes[node]['state'] = SPREADING_SUSCEPTIBLE 
+        g.nodes[node]['pInfect'] = p_vaccinate  
+        g.nodes[node]['vaccinated'] = True  
 
     return g
 
