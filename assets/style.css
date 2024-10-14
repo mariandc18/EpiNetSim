@@ -1,68 +1,111 @@
 /* Estilo para todo el contenedor */
 body {
-    background-color: #e0f7fa;
+    background-color: #121212; /* Fondo oscuro */
     font-family: 'Roboto', sans-serif;
+    color: #e0e0e0; /* Texto claro */
     margin: 0;
     padding: 0;
 }
-
 /* Encabezado */
 h1 {
     text-align: center;
-    color: #00796b;
-    margin-top: 20px;
-    font-size: 2.5em;
+    color: #64b5f6; /* Azul claro */
+    margin-top: 30px;
+    font-size: 2.8em;
+    letter-spacing: 1px;
 }
-
 /* Contenedores */
 #app-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row; /* Use row to place items side by side */
+    justify-content: space-between; /* Adds space between the columns */
+    align-items: flex-start; /* Align items to the top */
     padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #ffffff;
-    border-radius: 10px;
+    background-color: #1e1e1e; /* Fondo más oscuro para el contenedor */
+    border-radius: 12px;
+    margin: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 90vw;
 }
-
-/* Estilo para los dropdowns y entradas */
-.dash-dropdown,
-.dash-input {
-    margin: 10px;
+/* Left and right columns */
+#left-column {
+    flex: 3; /* Adjust flex to make this column wider */
     padding: 10px;
-    font-size: 1.1em;
-    border: 1px solid #00796b;
-    border-radius: 5px;
 }
-
+#right-column {
+    flex: 1; /* Adjust flex to make this column narrower */
+    padding: 10px;
+}
+/* Estilo para los dropdowns y entradas */
+.dash-dropdown,.dash-input {
+    background-color: #2c2c2c; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    border: 1px solid #64b5f6; /* Azul claro */
+    border-radius: 8px;
+    margin: 15px;
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+    max-width: 300px;
+}
 /* Botones */
 button {
-    background-color: #00796b;
-    color: white;
+    background-color: #1a73e8; /* Azul oscuro */
+    color: #ffffff; /* Texto blanco */
     border: none;
     padding: 10px 20px;
     margin: 10px;
-    font-size: 1.1em;
-    border-radius: 5px;
+    font-size: 1em;
+    border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    width: 150px; /* Ensuring all buttons have the same width */
 }
-
 button:hover {
-    background-color: #004d40;
+    background-color: #1565c0; /* Azul más oscuro */
+    transform: scale(1.05);
 }
-
 button:disabled {
-    background-color: #cccccc;
+    background-color: #455a64; /* Gris azulado */
     cursor: not-allowed;
 }
-
 /* Estilo del gráfico */
 #graph {
     margin-top: 20px;
     padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #00796b;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #1e1e1e; /* Fondo oscuro */
+    border: 1px solid #64b5f6; /* Azul claro */
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 50vw; /* Reduce the width of the graph */
+    max-height: 50vh; /* Reduce the height of the graph */
+}
+/* Ajuste de las etiquetas y entradas de parámetros */
+#model-parameters {
+    display: flex;
+    flex-direction: column; /* To ensure parameters are in a column */
+    align-items: flex-start; /* Align items to the start of the container */
+}
+#model-parameters label {
+    font-size: 1em;
+    color: #90caf9; /* Azul claro para el texto */
+    margin-bottom: 5px;
+    display: block;
+}
+#model-parameters input {
+    background-color: #2c2c2c; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    border: 1px solid #64b5f6; /* Azul claro */
+    border-radius: 5px;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+    max-width: 300px;
+}
+/* Estilo de las etiquetas de los parámetros */
+html.Label {
+    font-weight: bold;
+    color: #90caf9; /* Azul claro */
 }

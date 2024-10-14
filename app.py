@@ -14,7 +14,7 @@ from models.SEIRS_model_pLossImmunity import spreading_make_seirs_model
 from models.SEIR_model import spreading_make_seir_model
 from models.SEIRS_model_immunity_period import spreading_make_seirs_model
 
-# Constants for SIR model states
+
 SPREADING_SUSCEPTIBLE = 'S'
 SPREADING_INFECTED = 'I'
 SPREADING_RECOVERED = 'R'
@@ -30,61 +30,54 @@ color_map = {
     SPREADING_QUARANTINED: 'orange',
     SPREADING_EXPOSED:'yellow'
 }
-
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
 app.layout = html.Div([
     html.H1("Simulador de Propagación de Epidemias"),
-
-    html.Label("Selecciona un Modelo:"),
-    dcc.Dropdown(
-        id='model-dropdown',
-        options=[
-            {'label': 'Susceptible - Infectado - Recuperado (SIR)', 'value': 'SIR'},
-            {'label':'Susceptible - Infectado - Recuperado - Fallecido (SIRD)', 'value':'SIRD'},
-            {'label': 'Susceptible - Infectado - Susceptible (SIS)', 'value': 'SIS'},
-            {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con tiempo de recuperación fijo]', 'value':'SIRS_period'},
-            {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con probabilidad de susceptibilidad]','value':'SIRS_probability'},
-            {'label':'Susceptible - Expuesto - Infectado - Recuperado (SEIR)', 'value':'SEIR'},
-            {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con tiempo de recuperación fijo]', 'value':'SEIRS_inmunity'},
-            {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con probabilidad de susceptibilidad]', 'value':'SEIRS_plossimmunity'},
-        ],
-        value='SIR'
-    ),
-
-    html.Div(id='model-parameters'),
-    html.Div(id='report', style={'whiteSpace': 'pre-wrap'}),
-
-    html.Button('Iniciar', id='start-button', n_clicks=0),
-    html.Button('Pausar', id='pause-button', n_clicks=0),
-    html.Button('Continuar', id='continue-button', n_clicks=0),
-    html.Button('Reset', id='reset-button', n_clicks=0),
-    html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
-    html.Button('Desconectar Nodos', id='disconnect-button', n_clicks=0),
-
-    dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True), 
-
-    dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
-
-    dcc.Store(id='graph-data', data={'graph': None, 'step': 0}),
-    dcc.Store(id='simulation-running', data=False), 
-
-    # Nuevos campos de entrada para el número de nodos a poner en cuarentena y desconectar
-    html.Label('Número de Nodos a Poner en Cuarentena:'),
-    dcc.Input(id='quarantine-input', type='number', value=10, min=0),
-
-    html.Label('Número de Nodos a Desconectar:'),
-    dcc.Input(id='disconnect-input', type='number', value=10, min=0),
-
-    # Nuevos campos para la campaña de vacunación
-    html.Label('Número de Nodos a Vacunar:'),
-    dcc.Input(id='vaccination-input', type='number', value=10, min=0),
-
-    html.Label('Probabilidad de Infección de Nodos Vacunados (pVaccinate):'),
-    dcc.Input(id='pVaccinate', type='number', value=0.01, step=0.01),
-
-    html.Button('Vacunar', id='vaccinate-button', n_clicks=0),
+    html.Div([
+        html.Div([
+            html.Label("Selecciona un Modelo:"),
+            dcc.Dropdown(
+                id='model-dropdown',
+                options=[
+                    {'label': 'Susceptible - Infectado - Recuperado (SIR)', 'value': 'SIR'},
+                    {'label':'Susceptible - Infectado - Recuperado - Fallecido (SIRD)', 'value':'SIRD'},
+                    {'label': 'Susceptible - Infectado - Susceptible (SIS)', 'value': 'SIS'},
+                    {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con tiempo de recuperación fijo]', 'value':'SIRS_period'},
+                    {'label': 'Susceptible - Infectado - Recuperado - Susceptible (SIRS)[Con probabilidad de susceptibilidad]','value':'SIRS_probability'},
+                    {'label':'Susceptible - Expuesto - Infectado - Recuperado (SEIR)', 'value':'SEIR'},
+                    {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con tiempo de recuperación fijo]', 'value':'SEIRS_inmunity'},
+                    {'label': 'Susceptible - Expuesto - Infectado - Recuperado - Susceptible (SEIRS)[Con probabilidad de susceptibilidad]', 'value':'SEIRS_plossimmunity'},
+                ],
+                value='SIR'
+            ),
+            html.Div(id='model-parameters'),
+        ], id='left-column'),
+        html.Div([
+            html.Div(id='report', style={'whiteSpace': 'pre-wrap'}),
+            html.Button('Iniciar', id='start-button', n_clicks=0),
+            html.Button('Pausar', id='pause-button', n_clicks=0),
+            html.Button('Continuar', id='continue-button', n_clicks=0),
+            html.Button('Reset', id='reset-button', n_clicks=0),
+            html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
+            html.Button('Desconectar Nodos', id='disconnect-button', n_clicks=0),
+            dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True),
+            dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
+            dcc.Store(id='graph-data', data={'graph': None, 'step': 0}),
+            dcc.Store(id='simulation-running', data=False),
+            html.Label('Número de Nodos a Poner en Cuarentena:'),
+            dcc.Input(id='quarantine-input', type='number', value=10, min=0),
+            html.Label('Número de Nodos a Desconectar:'),
+            dcc.Input(id='disconnect-input', type='number', value=10, min=0),
+            html.Label('Número de Nodos a Vacunar:'),
+            dcc.Input(id='vaccination-input', type='number', value=10, min=0),
+            html.Label('Probabilidad de Infección de Nodos Vacunados (pVaccinate):'),
+            dcc.Input(id='pVaccinate', type='number', value=0.01, step=0.01),
+            html.Button('Vacunar', id='vaccinate-button', n_clicks=0),
+        ], id='right-column'),
+    ], id='app-container')
 ])
+
 
 @app.callback(
     Output('model-parameters', 'children'),
@@ -217,14 +210,11 @@ def display_model_parameters(selected_model):
 REPORT_FILE = 'simulation_report.txt'
 GRAPH_DATA_FILE = 'nodes_evolution.txt'
 
-# Limpia el contenido de los archivos al inicio de la simulación
 def clear_report_files():
     with open(REPORT_FILE, 'w') as file:
-        file.write('')  # Borra el contenido anterior
+        file.write('') 
     with open(GRAPH_DATA_FILE, 'w') as file:
-        file.write('')  # Borra el contenido anterior
-
-# Llama a esta función al inicio de la simulación (por ejemplo, al presionar el botón de inicio)
+        file.write('')  
 clear_report_files()
 
 @app.callback(
@@ -238,10 +228,7 @@ def update_report(n_intervals, graph_data, selected_model):
         return ''
 
     g = nx.node_link_graph(graph_data['graph'])
-    # Cuenta los nodos en cada estado
     state_counts = collections.Counter(nx.get_node_attributes(g, 'state').values())
-
-    # Genera el reporte
     report = f"Modelo seleccionado: {selected_model}\n"
     report += f"Iteración: {graph_data['step']}\n"
     for state, count in state_counts.items():
