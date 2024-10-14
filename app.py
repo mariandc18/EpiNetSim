@@ -95,10 +95,10 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
 
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
 
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
         ])
     elif selected_model == 'SIS':
@@ -106,10 +106,10 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
 
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
 
-            html.Label("Probabilidad de Ser Nuevamente Susceptible (pRecover):"),
+            html.Label("Probabilidad de Ser Nuevamente Susceptible:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
         ])
     elif selected_model == 'SIRD':
@@ -117,13 +117,13 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Probabilidad de Muerte (pDeath):"),
+            html.Label("Probabilidad de Muerte:"),
             dcc.Input(id='pDeath', type='number', value=0.005, step=0.001),
     ])
     elif selected_model == 'SIRS_period':
@@ -131,13 +131,13 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Número de iteraciones para la recuperación (recovery_duration):"),
+            html.Label("Número de iteraciones para la recuperación:"),
             dcc.Input(id='recovery_duration', type='number', value=5, step=1),
     ])
     
@@ -146,13 +146,13 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación: "),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Probabilidad de volver a ser susceptible (pSusceptible):"),
+            html.Label("Probabilidad de volver a ser susceptible:"),
             dcc.Input(id='pSusceptible', type='number', value=0.05, step=0.01),
     ])
     
@@ -161,13 +161,13 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Probabilidad de convertirse en infeccioso (pExposedToInfectious):"),
+            html.Label("Probabilidad de convertirse en infeccioso:"),
             dcc.Input(id='pExposedToInfectious', type='number', value=0.05, step=0.01),
     ])
     
@@ -176,16 +176,16 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Probabilidad de convertirse en infeccioso (pExposedToInfectious):"),
+            html.Label("Probabilidad de convertirse en infeccioso:"),
             dcc.Input(id='pExposedToInfectious', type='number', value=0.05, step=0.01),
             
-            html.Label("Periodo de tiempo de inmunidad (immunity_period):"),
+            html.Label("Periodo de tiempo de inmunidad:"),
             dcc.Input(id='immunity_period', type='number', value=0.05, step=0.01),
     
     ])
@@ -195,16 +195,16 @@ def display_model_parameters(selected_model):
             html.Label("Número de Nodos:"),
             dcc.Input(id='num-nodes', type='number', value=300, min=10, step=10),
             
-            html.Label("Probabilidad de Infección (pInfect):"),
+            html.Label("Probabilidad de Infección:"),
             dcc.Input(id='pInfect', type='number', value=0.1, step=0.01),
             
-            html.Label("Probabilidad de Recuperación (pRecover):"),
+            html.Label("Probabilidad de Recuperación:"),
             dcc.Input(id='pRecover', type='number', value=0.01, step=0.01),
             
-            html.Label("Probabilidad de convertirse en infeccioso (pExposedToInfectious):"),
+            html.Label("Probabilidad de convertirse en infeccioso:"),
             dcc.Input(id='pExposedToInfectious', type='number', value=0.05, step=0.01),
             
-            html.Label("Probabilidad de volver a ser susceptible (pSusceptible):"),
+            html.Label("Probabilidad de volver a ser susceptible:"),
             dcc.Input(id='pSusceptible', type='number', value=0.05, step=0.01),
   
     ])
