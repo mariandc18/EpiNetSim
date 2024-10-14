@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output, State
 import networkx as nx
 import plotly.graph_objects as go
 import random
+import collections
 from models.SIR_model import spreading_init, spreading_seed, spreading_make_sir_model, spreading_step
 from models.SIS_model import spreading_make_sis_model
 from models.SIRS_model_in_period import spreading_make_sirs_model
@@ -213,6 +214,19 @@ def display_model_parameters(selected_model):
     else:
         return html.Div() 
     
+REPORT_FILE = 'simulation_report.txt'
+GRAPH_DATA_FILE = 'nodes_evolution.txt'
+
+# Limpia el contenido de los archivos al inicio de la simulación
+def clear_report_files():
+    with open(REPORT_FILE, 'w') as file:
+        file.write('')  # Borra el contenido anterior
+    with open(GRAPH_DATA_FILE, 'w') as file:
+        file.write('')  # Borra el contenido anterior
+
+# Llama a esta función al inicio de la simulación (por ejemplo, al presionar el botón de inicio)
+clear_report_files()
+
 @app.callback(
     Output('report', 'children'),
     Input('interval', 'n_intervals'),
@@ -224,16 +238,21 @@ def update_report(n_intervals, graph_data, selected_model):
         return ''
 
     g = nx.node_link_graph(graph_data['graph'])
-    report = f'Modelo: {selected_model}\n'
-    report += f'Iteración: {graph_data["step"]}\n'
-    report += 'Nodos por estado:\n'
+    # Cuenta los nodos en cada estado
+    state_counts = collections.Counter(nx.get_node_attributes(g, 'state').values())
 
-    states = [g.nodes[node]['state'] for node in g.nodes]
-    for state in set(states):
-        count = states.count(state)
-        report += f'{state}: {count}\n'
+    # Genera el reporte
+    report = f"Modelo seleccionado: {selected_model}\n"
+    report += f"Iteración: {graph_data['step']}\n"
+    for state, count in state_counts.items():
+        report += f"{state}: {count} nodos\n"
+
+    # Guarda el reporte en el archivo
+    with open(REPORT_FILE, 'a') as file:
+        file.write(report + '\n')
 
     return report
+
 
 def quarantine_simulation(g, num_quarantine):
     nodes = list(g.nodes)
