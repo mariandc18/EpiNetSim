@@ -52,6 +52,7 @@ app.layout = html.Div([
     ),
 
     html.Div(id='model-parameters'),
+    html.Div(id='report', style={'whiteSpace': 'pre-wrap'}),
 
     html.Button('Iniciar', id='start-button', n_clicks=0),
     html.Button('Pausar', id='pause-button', n_clicks=0),
@@ -211,6 +212,28 @@ def display_model_parameters(selected_model):
 
     else:
         return html.Div() 
+    
+@app.callback(
+    Output('report', 'children'),
+    Input('interval', 'n_intervals'),
+    State('graph-data', 'data'),
+    State('model-dropdown', 'value')
+)
+def update_report(n_intervals, graph_data, selected_model):
+    if graph_data['graph'] is None:
+        return ''
+
+    g = nx.node_link_graph(graph_data['graph'])
+    report = f'Modelo: {selected_model}\n'
+    report += f'Iteración: {graph_data["step"]}\n'
+    report += 'Nodos por estado:\n'
+
+    states = [g.nodes[node]['state'] for node in g.nodes]
+    for state in set(states):
+        count = states.count(state)
+        report += f'{state}: {count}\n'
+
+    return report
 
 def quarantine_simulation(g, num_quarantine):
     nodes = list(g.nodes)
