@@ -48,6 +48,13 @@ h1 {
     width: 100%;
     max-width: 300px;
 }
+.small-spacing {
+    margin: 5px; /* Smaller spacing for inline elements */
+}
+.flex-container {
+    display: flex; 
+    align-items: center;
+}
 /* Botones */
 button {
     background-color: #1a73e8; /* Azul oscuro */

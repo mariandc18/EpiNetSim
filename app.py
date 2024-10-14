@@ -59,16 +59,25 @@ app.layout = html.Div([
             html.Button('Pausar', id='pause-button', n_clicks=0),
             html.Button('Continuar', id='continue-button', n_clicks=0),
             html.Button('Reset', id='reset-button', n_clicks=0),
-            html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
-            html.Button('Desconectar Nodos', id='disconnect-button', n_clicks=0),
+            
             dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True),
             dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
             dcc.Store(id='graph-data', data={'graph': None, 'step': 0}),
             dcc.Store(id='simulation-running', data=False),
+
+            # Quarantine, Disconnect Nodes, and Vaccination Sections
             html.Label('Número de Nodos a Poner en Cuarentena:'),
-            dcc.Input(id='quarantine-input', type='number', value=10, min=0),
+            html.Div([
+                dcc.Input(id='quarantine-input', type='number', value=10, min=0),
+                html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
+            ], style={'display': 'flex', 'alignItems': 'center'}),
+
             html.Label('Número de Nodos a Desconectar:'),
-            dcc.Input(id='disconnect-input', type='number', value=10, min=0),
+            html.Div([
+                dcc.Input(id='disconnect-input', type='number', value=10, min=0),
+                html.Button('Desconectar Nodos', id='disconnect-button', n_clicks=0),
+            ], style={'display': 'flex', 'alignItems': 'center'}),
+
             html.Label('Número de Nodos a Vacunar:'),
             dcc.Input(id='vaccination-input', type='number', value=10, min=0),
             html.Label('Probabilidad de Infección de Nodos Vacunados (pVaccinate):'),
@@ -77,6 +86,8 @@ app.layout = html.Div([
         ], id='right-column'),
     ], id='app-container')
 ])
+
+
 
 
 @app.callback(
