@@ -391,7 +391,8 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
             color=[color_map[g.nodes[i]['state']] for i in g.nodes],
             size=10,
             line=dict(width=2)
-        )
+        ),
+        name= 'Nodos'
     )
     
     edge_x = []
@@ -408,13 +409,33 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
         y=edge_y,
         line=dict(width=1,color='black'),
         hoverinfo='none',
-        mode='lines'
+        mode='lines',
+        name= 'Aristas'
     )
 
-    fig = go.Figure(data=[edge_trace,node_trace])
+    description_map = {
+    'S': 'Susceptible',
+    'I': 'Infectado',
+    'R': 'Recuperado',
+    'D': 'SPREADING_DEAD',
+    'Quarantined': 'En cuarentena',
+    'E': 'Expuesto'
+}
+
+    legend_entries = [
+        go.Scatter(
+            x=[None], y=[None],
+            mode='markers',
+            marker=dict(color=color, size=10),
+            name=description_map[state]  
+        )
+        for state, color in color_map.items()
+    ]
+
+    fig = go.Figure(data=[edge_trace,node_trace] + legend_entries )
     
     fig.update_layout(
-        showlegend=False,
+        showlegend=True,
         xaxis=dict(showgrid=False , zeroline=False),
         yaxis=dict(showgrid=False , zeroline=False)
     )
