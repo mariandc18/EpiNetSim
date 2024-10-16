@@ -74,7 +74,7 @@ button:hover {
     transform: scale(1.05);
 }
 button:disabled {
-    background-color: #455a64; /* Gris azulado */
+    background-color: #0a0a0a; /* Gris azulado */
     cursor: not-allowed;
 }
 /* Estilo del gráfico */

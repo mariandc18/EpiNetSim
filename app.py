@@ -58,7 +58,7 @@ app.layout = html.Div([
             html.Button('Iniciar', id='start-button', n_clicks=0),
             html.Button('Pausar', id='pause-button', n_clicks=0),
             html.Button('Continuar', id='continue-button', n_clicks=0),
-            html.Button('Reset', id='reset-button', n_clicks=0),
+            html.Button('Reiniciar', id='reset-button', n_clicks=0),
             
             dcc.Interval(id='interval', interval=1000, n_intervals=0, disabled=True),
             dcc.Graph(id='graph', style={'width': '80vw', 'height': '80vh'}),
@@ -86,8 +86,6 @@ app.layout = html.Div([
         ], id='right-column'),
     ], id='app-container')
 ])
-
-
 
 
 @app.callback(
@@ -235,22 +233,51 @@ clear_report_files()
     State('model-dropdown', 'value')
 )
 def update_report(n_intervals, graph_data, selected_model):
+    
     if graph_data['graph'] is None:
         return ''
-
+    
     g = nx.node_link_graph(graph_data['graph'])
     state_counts = collections.Counter(nx.get_node_attributes(g, 'state').values())
+    
     report = f"Modelo seleccionado: {selected_model}\n"
     report += f"Iteración: {graph_data['step']}\n"
+    iteration_data = {}
+    
     for state, count in state_counts.items():
         report += f"{state}: {count} nodos\n"
+        analysis_report=report
+        iteration_data[state] = {'count': count}
+    
+    if graph_data['step'] % 7 == 0:  
+        
+        current_week_infected = iteration_data['I']['count']
+        previous_week_infected = iteration_data.get('I', {}).get('previous_count', 0)
+        
+        increment_week = current_week_infected - previous_week_infected
+        
+        iteration_data['I']['increment'] = increment_week
+        iteration_data['I']['previous_count'] = current_week_infected
+        analysis_report += f"Análisis semanal\n"
+        analysis_report += f"Incremento de los infectados desde la semana pasada: {increment_week}\n"
+  
+    if graph_data['step'] % 30 == 0: 
+        
+        analysis_report+=f"Análisis mensual\n"
+        total_infected = sum(iteration_data.get(state, {}).get('count', 0) for state in ['I'])
+        total_recovered = sum(iteration_data.get(state, {}).get('count', 0) for state in ['R'])
 
-    # Guarda el reporte en el archivo
+        iteration_data['Total Infected'] = {'count': total_infected}
+        iteration_data['Total Recovered'] = {'count': total_recovered}
+
+        analysis_report += f"Total acumulado de infectados: {total_infected}\n"
+        analysis_report += f"Total acumulado de recuperados: {total_recovered}\n"
+        
+    
     with open(REPORT_FILE, 'a') as file:
-        file.write(report + '\n')
-
+        file.write(analysis_report + '\n')
+    
     return report
-
 
 def quarantine_simulation(g, num_quarantine):
     nodes = list(g.nodes)
