@@ -444,30 +444,42 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
     'S': 'Susceptible',
     'I': 'Infectado',
     'R': 'Recuperado',
-    'D': 'SPREADING_DEAD',
+    'D': 'Muerto',
     'Quarantined': 'En cuarentena',
     'E': 'Expuesto'
 }
 
+    model_state_map = {
+        'SIR': ['S', 'I', 'R'],
+        'SIS': ['S', 'I'],
+        'SIRD': ['S', 'I', 'R', 'D'],
+        'SIRS_period': ['S', 'I', 'R'],
+        'SIRS_probability': ['S', 'I', 'R'],
+        'SEIR': ['S', 'E', 'I', 'R'],
+        'SEIRS_inmunity': ['S', 'E', 'I', 'R'],
+        'SEIRS_plossimmunity': ['S', 'E', 'I', 'R']
+    }
+
+    relevant_states = model_state_map.get(selected_model, [])
     legend_entries = [
         go.Scatter(
             x=[None], y=[None],
             mode='markers',
             marker=dict(color=color, size=10),
-            name=description_map[state]  
+            name=description_map[state]
         )
-        for state, color in color_map.items()
+        for state, color in color_map.items() if state in relevant_states
     ]
 
-    fig = go.Figure(data=[edge_trace,node_trace] + legend_entries )
-    
+    fig = go.Figure(data=[edge_trace, node_trace] + legend_entries)
+
     fig.update_layout(
         showlegend=True,
-        xaxis=dict(showgrid=False , zeroline=False),
-        yaxis=dict(showgrid=False , zeroline=False)
+        xaxis=dict(showgrid=False, zeroline=False),
+        yaxis=dict(showgrid=False, zeroline=False)
     )
 
-    return fig , graph_data , simulation_running , False  
+    return fig, graph_data, simulation_running, False
 
 if __name__ == '__main__':
    app.run_server(debug=True)
