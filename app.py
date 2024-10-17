@@ -258,8 +258,18 @@ def update_report(n_intervals, graph_data, selected_model):
         
         iteration_data['I']['increment'] = increment_week
         iteration_data['I']['previous_count'] = current_week_infected
+        iteration_data['I']['increment'] = increment_week
+        iteration_data['I']['previous_count'] = current_week_infected
         analysis_report += f"Análisis semanal\n"
         analysis_report += f"Incremento de los infectados desde la semana pasada: {increment_week}\n"
+        week_recovered = iteration_data['R']['count']
+        total = sum(state_data['count'] for state_data in iteration_data.values())
+        increment_recovered = (week_recovered/total)* 100
+        iteration_data['R']['increment'] = increment_recovered
+        iteration_data['R']['previous_count'] = week_recovered
+        analysis_report += f"Tasa de recuperación desde la semana pasada: {increment_recovered}%\n"
+        iteration_data['R']['increment'] = increment_recovered
+        iteration_data['R']['previous_count'] = week_recovered
   
     if graph_data['step'] % 30 == 0: 
         
