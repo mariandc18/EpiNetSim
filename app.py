@@ -69,6 +69,7 @@ app.layout = html.Div([
             html.Label('Número de Nodos a Poner en Cuarentena:'),
             html.Div([
                 dcc.Input(id='quarantine-input', type='number', value=10, min=0),
+                dcc.Input(id='quarantine-duration-input', type='number',placeholder='Duración de la cuarentena (iteraciones)',),
                 html.Button('Cuarentena', id='quarantine-button', n_clicks=0),
             ], style={'display': 'flex', 'alignItems': 'center'}),
 
@@ -252,14 +253,28 @@ def update_report(n_intervals, graph_data, selected_model):
     return report
 
 
-def quarantine_simulation(g, num_quarantine):
-    nodes = list(g.nodes)
-    quarantined_nodes = random.sample(nodes, min(num_quarantine, len(nodes)))  
-
+def quarantine_simulation(g, num_quarantine, quarantine_duration):
+    # Seleccionar los nodos infectados
+    infected_nodes = [node for node in g.nodes if g.nodes[node]['state'] == 'I']
+    
+    # Obtener los vecinos de los nodos infectados
+    neighbors_of_infected = set()
+    for node in infected_nodes:
+        neighbors_of_infected.update(g.neighbors(node))
+    
+    # Seleccionar nodos en cuarentena: infectados + vecinos
+    quarantine_candidates = list(set(infected_nodes).union(neighbors_of_infected))
+    
+    # Seleccionar un número limitado de nodos para poner en cuarentena
+    quarantined_nodes = random.sample(quarantine_candidates, min(num_quarantine, len(quarantine_candidates)))
+    
+    # Poner en cuarentena a los nodos seleccionados y establecer la duración de la cuarentena
     for node in quarantined_nodes:
-        g.nodes[node]['state'] = SPREADING_QUARANTINED
-
+        g.nodes[node]['state'] = 'Quarantined'
+        g.nodes[node]['quarantine_duration'] = quarantine_duration  # Duración de la cuarentena
+    
     return g
+
 
 def disconnect_random_nodes(g, num_disconnect):
     nodes = list(g.nodes)
@@ -285,7 +300,7 @@ def vaccinate_nodes(g, num_vaccinate, p_vaccinate):
     Output('graph', 'figure'),
     Output('graph-data', 'data'),
     Output('simulation-running', 'data'),
-    Output('interval', 'disabled'),  
+    Output('interval', 'disabled'),
     Input('interval', 'n_intervals'),
     Input('start-button', 'n_clicks'),
     Input('pause-button', 'n_clicks'),
@@ -299,21 +314,19 @@ def vaccinate_nodes(g, num_vaccinate, p_vaccinate):
     State('pInfect', 'value'),
     State('pRecover', 'value'),
     State('quarantine-input', 'value'),
+    State('quarantine-duration-input', 'value'),  # Duración de cuarentena
     State('disconnect-input', 'value'),
     State('vaccination-input', 'value'),
     State('pVaccinate', 'value'),
     State('graph-data', 'data'),
     State('simulation-running', 'data')
-)    
-
+)
 def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
-                  reset_clicks, quarantine_clicks,
-                  disconnect_clicks, vaccinate_clicks,
-                  selected_model, 
-                  num_nodes, p_infect, p_recover,
-                  num_quarantine, num_disconnect,
-                  num_vaccinate, p_vaccinate,
-                  graph_data, simulation_running):
+                 reset_clicks, quarantine_clicks, disconnect_clicks, vaccinate_clicks,
+                 selected_model, num_nodes, p_infect, p_recover,
+                 num_quarantine, quarantine_duration,  # Recibir la duración de la cuarentena
+                 num_disconnect, num_vaccinate, p_vaccinate,
+                 graph_data, simulation_running):
     p_death = 0.005
     recovery_duration=5
     pSusceptible=0.05
@@ -347,7 +360,7 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
         return dash.no_update, graph_data, simulation_running, False 
 
     if triggered_id == 'quarantine-button':
-        g = quarantine_simulation(g, num_quarantine) 
+        g = quarantine_simulation(g, num_quarantine, quarantine_duration)
         graph_data['graph'] = nx.node_link_data(g)
 
     if triggered_id == 'disconnect-button':
@@ -359,6 +372,15 @@ def update_graph(n_intervals, start_clicks, pause_clicks, continue_clicks,
         graph_data['graph'] = nx.node_link_data(g)
 
     if simulation_running:
+        for node in g.nodes:
+            if g.nodes[node]['state'] == 'Quarantined':
+                if 'quarantine_duration' in g.nodes[node]:
+                    g.nodes[node]['quarantine_duration'] -= 1
+                    # Cuando la duración de la cuarentena llega a cero, el nodo vuelve a ser susceptible
+                    if g.nodes[node]['quarantine_duration'] <= 0:
+                        g.nodes[node]['state'] = 'S'
+                        del g.nodes[node]['quarantine_duration']
+        
         if selected_model == 'SIR':
             model = spreading_make_sir_model(p_infect, p_recover)
         elif selected_model == 'SIS':
